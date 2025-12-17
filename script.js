@@ -165,7 +165,9 @@ function spinWheel(prizeIndex) {
     const stopAngle = calculateStopAngle(prizeIndex);
     
     // 设置转盘最终角度
-    wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+    // 使用 cubic-bezier(0.25, 1, 0.5, 1) 模拟更自然的减速效果（Ease Out Quart 变体）
+    // 这种曲线初始速度快，然后非常平滑地减速直到停止
+    wheel.style.transition = 'transform 6s cubic-bezier(0.25, 1, 0.5, 1)';
     wheel.style.transform = `rotate(${stopAngle}deg)`;
     
     // 更新当前旋转角度（保存完整角度，用于下次计算）
