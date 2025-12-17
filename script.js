@@ -75,7 +75,7 @@ function validateProbabilities() {
         return true;
     } else {
         validationMessage.classList.add('error');
-        validationMessage.textContent = `5个奖品概率总和需为100%，当前总和：${total}%`;
+        validationMessage.textContent = `10个奖品概率总和需为100%，当前总和：${total}%`;
         drawButton.disabled = true;
         drawButton.textContent = '请配置正确概率';
         return false;
@@ -110,10 +110,9 @@ function calculateWinner() {
 
 // 计算转盘停止角度
 function calculateStopAngle(prizeIndex) {
-    // 每个扇形的中心角度（从顶部0度开始，顺时针）：36°, 108°, 180°, 252°, 324°
-    // 指针位于顶部（0度位置）
-    // 要让某个扇形的中心对准指针，转盘需要顺时针转动，使该扇形的中心到达顶部
-    const sectorCenters = [36, 108, 180, 252, 324];
+    // 每个扇形的中心角度（从顶部0度开始，顺时针）
+    // 10个扇形，每个36度，中心分别为 0, 36, 72, ...
+    const sectorCenters = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324];
     const targetCenter = sectorCenters[prizeIndex];
     
     // 计算让扇形中心对准指针的角度

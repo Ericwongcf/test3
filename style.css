@@ -148,70 +148,38 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
+    transform-origin: 50% 50%;
+    /* Create a wedge centered at top (0 degrees) with 36 degree spread (-18 to +18) */
+    /* tan(18) = 0.3249 => 50 * 0.3249 = 16.245 */
+    /* Points: Center(50,50), TopLeft(33.755, 0), TopRight(66.245, 0) */
+    clip-path: polygon(50% 50%, 33.755% 0%, 66.245% 0%);
 }
 
-/* 使用clip-path创建扇形，每个扇形72度 */
-.wheel-sector[data-index="0"] {
-    background: #fee2e2;
-    clip-path: polygon(50% 50%, 50% 0%, 95.1056516% 30.9016994%);
-}
-
-.wheel-sector[data-index="1"] {
-    background: #dbeafe;
-    clip-path: polygon(50% 50%, 95.1056516% 30.9016994%, 95.1056516% 69.0983006%);
-}
-
-.wheel-sector[data-index="2"] {
-    background: #d1fae5;
-    clip-path: polygon(50% 50%, 95.1056516% 69.0983006%, 50% 100%);
-}
-
-.wheel-sector[data-index="3"] {
-    background: #fef3c7;
-    clip-path: polygon(50% 50%, 50% 100%, 4.8943484% 69.0983006%);
-}
-
-.wheel-sector[data-index="4"] {
-    background: #ede9fe;
-    clip-path: polygon(50% 50%, 4.8943484% 30.9016994%, 50% 0%);
-}
+/* 10个扇形，每个36度 */
+.wheel-sector[data-index="0"] { background: #fee2e2; transform: rotate(0deg); }
+.wheel-sector[data-index="1"] { background: #dbeafe; transform: rotate(36deg); }
+.wheel-sector[data-index="2"] { background: #d1fae5; transform: rotate(72deg); }
+.wheel-sector[data-index="3"] { background: #fef3c7; transform: rotate(108deg); }
+.wheel-sector[data-index="4"] { background: #ede9fe; transform: rotate(144deg); }
+.wheel-sector[data-index="5"] { background: #fee2e2; transform: rotate(180deg); }
+.wheel-sector[data-index="6"] { background: #dbeafe; transform: rotate(216deg); }
+.wheel-sector[data-index="7"] { background: #d1fae5; transform: rotate(252deg); }
+.wheel-sector[data-index="8"] { background: #fef3c7; transform: rotate(288deg); }
+.wheel-sector[data-index="9"] { background: #ede9fe; transform: rotate(324deg); }
 
 .sector-text {
     position: absolute;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #1f2937;
     white-space: nowrap;
     pointer-events: none;
     z-index: 5;
-}
-
-/* 文字位置：每个扇形文字放在对应区域的中心位置 */
-.wheel-sector[data-index="0"] .sector-text {
+    /* Position text at the top of the wedge */
     top: 15%;
     left: 50%;
     transform: translateX(-50%);
-}
-
-.wheel-sector[data-index="1"] .sector-text {
-    top: 35%;
-    right: 15%;
-}
-
-.wheel-sector[data-index="2"] .sector-text {
-    bottom: 35%;
-    right: 15%;
-}
-
-.wheel-sector[data-index="3"] .sector-text {
-    bottom: 15%;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.wheel-sector[data-index="4"] .sector-text {
-    top: 35%;
-    left: 15%;
+    /* Optional: rotate text to be vertical/radial if needed, but horizontal is readable for top sector */
 }
 
 .pointer {
