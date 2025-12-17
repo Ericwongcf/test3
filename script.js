@@ -139,6 +139,8 @@ function calculateStopAngle(prizeIndex) {
     if (diff < 0) {
         diff += 360;
     }
+
+    console.log(`Prize Index: ${prizeIndex}, Target Center: ${targetCenter}, Current Rotation: ${currentRotation}, Diff: ${diff}, Random Offset: ${randomOffset}`);
     
     // 加上基础圈数和随机偏移
     // 注意：randomOffset 是相对中心的偏移，直接加在最后即可
