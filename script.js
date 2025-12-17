@@ -1,0 +1,198 @@
+// 获取DOM元素
+const prizeNameInputs = document.querySelectorAll('.prize-name');
+const prizeProbabilityInputs = document.querySelectorAll('.prize-probability');
+const validationMessage = document.getElementById('validationMessage');
+const drawButton = document.getElementById('drawButton');
+const resultDisplay = document.getElementById('resultDisplay');
+const wheel = document.getElementById('wheel');
+const wheelSectors = document.querySelectorAll('.wheel-sector');
+
+// 状态管理
+let isSpinning = false;
+let currentRotation = 0;
+
+// 初始化：更新转盘显示
+function updateWheelDisplay() {
+    prizeNameInputs.forEach((input, index) => {
+        const text = input.value.trim() || `奖品 ${index + 1}`;
+        wheelSectors[index].querySelector('.sector-text').textContent = text;
+    });
+}
+
+// 实时校验概率
+function validateProbabilities() {
+    let total = 0;
+    let hasError = false;
+    let errorMessage = '';
+
+    prizeProbabilityInputs.forEach((input, index) => {
+        const value = input.value.trim();
+        const numValue = parseInt(value, 10);
+
+        // 清除之前的错误样式
+        input.classList.remove('error');
+
+        // 检查是否为空
+        if (value === '') {
+            input.classList.add('error');
+            hasError = true;
+            errorMessage = '请输入0-100的整数';
+            return;
+        }
+
+        // 检查是否为有效数字
+        if (isNaN(numValue) || numValue < 0 || numValue > 100) {
+            input.classList.add('error');
+            hasError = true;
+            errorMessage = '请输入0-100的整数';
+            return;
+        }
+
+        // 检查是否为整数
+        if (numValue !== parseFloat(value)) {
+            input.classList.add('error');
+            hasError = true;
+            errorMessage = '请输入0-100的整数';
+            return;
+        }
+
+        total += numValue;
+    });
+
+    // 显示校验结果
+    validationMessage.className = 'validation-message';
+    if (hasError) {
+        validationMessage.classList.add('error');
+        validationMessage.textContent = errorMessage;
+        drawButton.disabled = true;
+        drawButton.textContent = '请配置正确概率';
+        return false;
+    } else if (total === 100) {
+        validationMessage.classList.add('success');
+        validationMessage.textContent = '概率配置正确';
+        drawButton.disabled = false;
+        drawButton.textContent = '开始抽奖';
+        return true;
+    } else {
+        validationMessage.classList.add('error');
+        validationMessage.textContent = `5个奖品概率总和需为100%，当前总和：${total}%`;
+        drawButton.disabled = true;
+        drawButton.textContent = '请配置正确概率';
+        return false;
+    }
+}
+
+// 根据概率计算中奖奖品
+function calculateWinner() {
+    const probabilities = [];
+    let cumulative = 0;
+
+    prizeProbabilityInputs.forEach(input => {
+        const prob = parseInt(input.value, 10);
+        cumulative += prob;
+        probabilities.push(cumulative);
+    });
+
+    // 生成0-99的随机数
+    const random = Math.floor(Math.random() * 100);
+
+    // 确定落在哪个区间
+    for (let i = 0; i < probabilities.length; i++) {
+        const prevProb = i === 0 ? 0 : probabilities[i - 1];
+        if (random >= prevProb && random < probabilities[i]) {
+            return i;
+        }
+    }
+
+    // 默认返回最后一个（防止边界情况）
+    return probabilities.length - 1;
+}
+
+// 计算转盘停止角度
+function calculateStopAngle(prizeIndex) {
+    // 每个扇形的中心角度（从顶部0度开始，顺时针）：36°, 108°, 180°, 252°, 324°
+    // 指针位于顶部（0度位置）
+    // 要让某个扇形的中心对准指针，转盘需要顺时针转动，使该扇形的中心到达顶部
+    const sectorCenters = [36, 108, 180, 252, 324];
+    const targetCenter = sectorCenters[prizeIndex];
+    
+    // 计算让扇形中心对准指针的角度
+    // 例如：奖品1的中心在36度，要让它对准0度（顶部），需要逆时针转36度
+    // 但CSS顺时针为正，所以需要转360-36=324度
+    const adjustment = (360 - targetCenter) % 360;
+    
+    // 为了视觉效果，至少转5圈以上
+    const baseRotation = 360 * 5;
+    
+    // 最终角度 = 当前角度 + 基础圈数 + 调整角度
+    const finalAngle = currentRotation + baseRotation + adjustment;
+    
+    return finalAngle;
+}
+
+// 转盘转动动画
+function spinWheel(prizeIndex) {
+    isSpinning = true;
+    drawButton.disabled = true;
+    drawButton.textContent = '抽奖中...';
+    resultDisplay.textContent = '';
+    resultDisplay.classList.remove('winner');
+
+    // 计算停止角度
+    const stopAngle = calculateStopAngle(prizeIndex);
+    
+    // 设置转盘最终角度
+    wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+    wheel.style.transform = `rotate(${stopAngle}deg)`;
+    
+    // 更新当前旋转角度（保存完整角度，用于下次计算）
+    currentRotation = stopAngle;
+
+    // 转动完成后显示结果
+    setTimeout(() => {
+        isSpinning = false;
+        drawButton.disabled = false;
+        drawButton.textContent = '开始抽奖';
+        
+        // 显示中奖结果
+        const prizeName = prizeNameInputs[prizeIndex].value.trim() || `奖品 ${prizeIndex + 1}`;
+        resultDisplay.textContent = `恭喜您抽中：【${prizeName}】`;
+        resultDisplay.classList.add('winner');
+    }, 4000);
+}
+
+// 开始抽奖
+function startDraw() {
+    if (isSpinning || !validateProbabilities()) {
+        return;
+    }
+
+    const winnerIndex = calculateWinner();
+    spinWheel(winnerIndex);
+}
+
+// 绑定事件监听器
+prizeNameInputs.forEach(input => {
+    input.addEventListener('input', updateWheelDisplay);
+    input.addEventListener('blur', updateWheelDisplay);
+});
+
+prizeProbabilityInputs.forEach(input => {
+    input.addEventListener('input', validateProbabilities);
+    input.addEventListener('blur', validateProbabilities);
+    
+    // 限制只能输入数字
+    input.addEventListener('keypress', (e) => {
+        const char = String.fromCharCode(e.which);
+        if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 0) {
+            e.preventDefault();
+        }
+    });
+});
+
+drawButton.addEventListener('click', startDraw);
+
+// 初始化
+updateWheelDisplay();
+validateProbabilities();
+

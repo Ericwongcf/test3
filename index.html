@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽奖转盘系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>抽奖转盘系统</h1>
+        
+        <!-- 配置区 -->
+        <div class="config-section">
+            <h2>奖品配置</h2>
+            <div class="config-items">
+                <div class="config-item" data-index="0">
+                    <label>
+                        <span>奖品名称：</span>
+                        <input type="text" class="prize-name" placeholder="奖品 1" value="奖品 1">
+                    </label>
+                    <label>
+                        <span>中奖概率：</span>
+                        <input type="number" class="prize-probability" placeholder="20" value="20" min="0" max="100" step="1">
+                        <span class="unit">%</span>
+                    </label>
+                </div>
+                <div class="config-item" data-index="1">
+                    <label>
+                        <span>奖品名称：</span>
+                        <input type="text" class="prize-name" placeholder="奖品 2" value="奖品 2">
+                    </label>
+                    <label>
+                        <span>中奖概率：</span>
+                        <input type="number" class="prize-probability" placeholder="20" value="20" min="0" max="100" step="1">
+                        <span class="unit">%</span>
+                    </label>
+                </div>
+                <div class="config-item" data-index="2">
+                    <label>
+                        <span>奖品名称：</span>
+                        <input type="text" class="prize-name" placeholder="奖品 3" value="奖品 3">
+                    </label>
+                    <label>
+                        <span>中奖概率：</span>
+                        <input type="number" class="prize-probability" placeholder="20" value="20" min="0" max="100" step="1">
+                        <span class="unit">%</span>
+                    </label>
+                </div>
+                <div class="config-item" data-index="3">
+                    <label>
+                        <span>奖品名称：</span>
+                        <input type="text" class="prize-name" placeholder="奖品 4" value="奖品 4">
+                    </label>
+                    <label>
+                        <span>中奖概率：</span>
+                        <input type="number" class="prize-probability" placeholder="20" value="20" min="0" max="100" step="1">
+                        <span class="unit">%</span>
+                    </label>
+                </div>
+                <div class="config-item" data-index="4">
+                    <label>
+                        <span>奖品名称：</span>
+                        <input type="text" class="prize-name" placeholder="奖品 5" value="奖品 5">
+                    </label>
+                    <label>
+                        <span>中奖概率：</span>
+                        <input type="number" class="prize-probability" placeholder="20" value="20" min="0" max="100" step="1">
+                        <span class="unit">%</span>
+                    </label>
+                </div>
+            </div>
+            <div class="validation-message" id="validationMessage"></div>
+        </div>
+
+        <!-- 转盘区 -->
+        <div class="wheel-section">
+            <div class="wheel-container">
+                <div class="wheel" id="wheel">
+                    <div class="wheel-sector" data-index="0">
+                        <span class="sector-text">奖品 1</span>
+                    </div>
+                    <div class="wheel-sector" data-index="1">
+                        <span class="sector-text">奖品 2</span>
+                    </div>
+                    <div class="wheel-sector" data-index="2">
+                        <span class="sector-text">奖品 3</span>
+                    </div>
+                    <div class="wheel-sector" data-index="3">
+                        <span class="sector-text">奖品 4</span>
+                    </div>
+                    <div class="wheel-sector" data-index="4">
+                        <span class="sector-text">奖品 5</span>
+                    </div>
+                </div>
+                <div class="pointer"></div>
+            </div>
+        </div>
+
+        <!-- 操作区 -->
+        <div class="action-section">
+            <button class="draw-button" id="drawButton">开始抽奖</button>
+            <div class="result-display" id="resultDisplay">请点击开始抽奖</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
