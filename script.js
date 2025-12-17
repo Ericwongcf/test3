@@ -1,223 +1,263 @@
-// 获取DOM元素
-const prizeNameInputs = document.querySelectorAll('.prize-name');
-const prizeProbabilityInputs = document.querySelectorAll('.prize-probability');
-const validationMessage = document.getElementById('validationMessage');
-const drawButton = document.getElementById('drawButton');
-const resultDisplay = document.getElementById('resultDisplay');
-const wheel = document.getElementById('wheel');
-const wheelSectors = document.querySelectorAll('.wheel-sector');
-
 // 状态管理
-let isSpinning = false;
-let currentRotation = 0;
+const state = {
+    step: 1,
+    prizeCount: 10,
+    isSpinning: false,
+    currentRotation: 0,
+    prizes: [] // { name: '', probability: 0 }
+};
 
-// 初始化：更新转盘显示
-function updateWheelDisplay() {
-    prizeNameInputs.forEach((input, index) => {
-        const text = input.value.trim() || `奖品 ${index + 1}`;
-        wheelSectors[index].querySelector('.sector-text').textContent = text;
-    });
-}
+// 预定义颜色数组
+const sectorColors = [
+    '#fee2e2', '#dbeafe', '#d1fae5', '#fef3c7', '#ede9fe', 
+    '#ffedd5', '#e0e7ff', '#fce7f3', '#dcfce7', '#fae8ff'
+];
 
-// 实时校验概率
-function validateProbabilities() {
-    let total = 0;
-    let hasError = false;
-    let errorMessage = '';
+// DOM 元素
+const elements = {
+    step1: document.getElementById('step1-setup'),
+    step2: document.getElementById('step2-config'),
+    step3: document.getElementById('step3-game'),
+    prizeCountSelect: document.getElementById('prizeCountSelect'),
+    step1NextBtn: document.getElementById('step1NextBtn'),
+    dynamicConfigItems: document.getElementById('dynamicConfigItems'),
+    validationMessage: document.getElementById('validationMessage'),
+    step2PrevBtn: document.getElementById('step2PrevBtn'),
+    step2NextBtn: document.getElementById('step2NextBtn'),
+    wheel: document.getElementById('wheel'),
+    drawButton: document.getElementById('drawButton'),
+    resultDisplay: document.getElementById('resultDisplay'),
+    restartBtn: document.getElementById('restartBtn')
+};
 
-    prizeProbabilityInputs.forEach((input, index) => {
-        const value = input.value.trim();
-        const numValue = parseInt(value, 10);
+// --- Step 1: 设置数量 ---
 
-        // 清除之前的错误样式
-        input.classList.remove('error');
+elements.step1NextBtn.addEventListener('click', () => {
+    const count = parseInt(elements.prizeCountSelect.value, 10);
+    if (count >= 3 && count <= 10) {
+        state.prizeCount = count;
+        // 初始化奖品数据
+        const defaultProb = Math.floor(100 / count);
+        const remainder = 100 - (defaultProb * count);
+        
+        state.prizes = Array.from({ length: count }, (_, i) => ({
+            name: `奖品 ${i + 1}`,
+            probability: i === count - 1 ? defaultProb + remainder : defaultProb
+        }));
 
-        // 检查是否为空
-        if (value === '') {
-            input.classList.add('error');
-            hasError = true;
-            errorMessage = '请输入0-100的整数';
-            return;
-        }
-
-        // 检查是否为有效数字
-        if (isNaN(numValue) || numValue < 0 || numValue > 100) {
-            input.classList.add('error');
-            hasError = true;
-            errorMessage = '请输入0-100的整数';
-            return;
-        }
-
-        // 检查是否为整数
-        if (numValue !== parseFloat(value)) {
-            input.classList.add('error');
-            hasError = true;
-            errorMessage = '请输入0-100的整数';
-            return;
-        }
-
-        total += numValue;
-    });
-
-    // 显示校验结果
-    validationMessage.className = 'validation-message';
-    if (hasError) {
-        validationMessage.classList.add('error');
-        validationMessage.textContent = errorMessage;
-        drawButton.disabled = true;
-        drawButton.textContent = '请配置正确概率';
-        return false;
-    } else if (total === 100) {
-        validationMessage.classList.add('success');
-        validationMessage.textContent = '概率配置正确';
-        drawButton.disabled = false;
-        drawButton.textContent = '开始抽奖';
-        return true;
-    } else {
-        validationMessage.classList.add('error');
-        validationMessage.textContent = `10个奖品概率总和需为100%，当前总和：${total}%`;
-        drawButton.disabled = true;
-        drawButton.textContent = '请配置正确概率';
-        return false;
+        renderStep2();
+        switchStep(2);
     }
-}
+});
 
-// 根据概率计算中奖奖品
-function calculateWinner() {
-    const probabilities = [];
-    let cumulative = 0;
+// --- Step 2: 配置奖品 ---
 
-    prizeProbabilityInputs.forEach(input => {
-        const prob = parseInt(input.value, 10);
-        cumulative += prob;
-        probabilities.push(cumulative);
+function renderStep2() {
+    elements.dynamicConfigItems.innerHTML = '';
+    
+    state.prizes.forEach((prize, index) => {
+        const div = document.createElement('div');
+        div.className = 'config-item';
+        div.innerHTML = `
+            <label>
+                <span>奖品名称：</span>
+                <input type="text" class="prize-name" data-index="${index}" value="${prize.name}" placeholder="奖品 ${index + 1}">
+            </label>
+            <label>
+                <span>中奖概率：</span>
+                <input type="number" class="prize-probability" data-index="${index}" value="${prize.probability}" min="0" max="100" step="1">
+                <span class="unit">%</span>
+            </label>
+        `;
+        elements.dynamicConfigItems.appendChild(div);
     });
 
-    // 生成0-99的随机数
-    const random = Math.floor(Math.random() * 100);
+    // 绑定输入事件
+    const nameInputs = elements.dynamicConfigItems.querySelectorAll('.prize-name');
+    const probInputs = elements.dynamicConfigItems.querySelectorAll('.prize-probability');
 
-    // 确定落在哪个区间
-    for (let i = 0; i < probabilities.length; i++) {
-        const prevProb = i === 0 ? 0 : probabilities[i - 1];
-        if (random >= prevProb && random < probabilities[i]) {
+    nameInputs.forEach(input => {
+        input.addEventListener('input', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            state.prizes[index].name = e.target.value;
+        });
+    });
+
+    probInputs.forEach(input => {
+        input.addEventListener('input', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            state.prizes[index].probability = parseInt(e.target.value) || 0;
+            validateProbabilities();
+        });
+    });
+
+    validateProbabilities();
+}
+
+function validateProbabilities() {
+    const total = state.prizes.reduce((sum, prize) => sum + (prize.probability || 0), 0);
+    const isValid = total === 100;
+    
+    elements.validationMessage.className = 'validation-message ' + (isValid ? 'success' : 'error');
+    elements.validationMessage.textContent = isValid 
+        ? '概率配置正确 (100%)' 
+        : `总概率需为100%，当前总和：${total}%`;
+    
+    elements.step2NextBtn.disabled = !isValid;
+    return isValid;
+}
+
+elements.step2PrevBtn.addEventListener('click', () => {
+    switchStep(1);
+});
+
+elements.step2NextBtn.addEventListener('click', () => {
+    if (validateProbabilities()) {
+        renderStep3();
+        switchStep(3);
+    }
+});
+
+// --- Step 3: 转盘抽奖 ---
+
+function renderStep3() {
+    elements.wheel.innerHTML = '';
+    const count = state.prizeCount;
+    const anglePerSector = 360 / count;
+    
+    // 计算 Clip Path
+    // 使用足够大的三角形覆盖扇形区域
+    // 顶点在中心 (50%, 50%)
+    // 对于 > 2 的数量，我们计算顶部边缘的两个点
+    const halfAngle = anglePerSector / 2;
+    const tanVal = Math.tan(halfAngle * Math.PI / 180);
+    const xOffset = 50 * tanVal; // 这里的50是指50%
+    // 偏移量
+    const x1 = 50 - xOffset;
+    const x2 = 50 + xOffset;
+    const clipPath = `polygon(50% 50%, ${x1}% 0%, ${x2}% 0%)`;
+
+    state.prizes.forEach((prize, index) => {
+        const sector = document.createElement('div');
+        sector.className = 'wheel-sector';
+        sector.style.backgroundColor = sectorColors[index % sectorColors.length];
+        sector.style.transform = `rotate(${index * anglePerSector}deg)`;
+        sector.style.clipPath = clipPath;
+        
+        // 调整文字
+        const textSpan = document.createElement('span');
+        textSpan.className = 'sector-text';
+        textSpan.textContent = prize.name;
+        // 动态调整文字大小以适应扇形
+        if (count > 8) textSpan.style.fontSize = '12px';
+        
+        sector.appendChild(textSpan);
+        elements.wheel.appendChild(sector);
+    });
+
+    // 重置状态
+    state.isSpinning = false;
+    state.currentRotation = 0;
+    elements.wheel.style.transition = 'none';
+    elements.wheel.style.transform = 'rotate(0deg)';
+    elements.drawButton.disabled = false;
+    elements.drawButton.textContent = '开始抽奖';
+    elements.resultDisplay.textContent = '准备就绪，祝您好运！';
+    elements.resultDisplay.className = 'result-display';
+}
+
+function calculateWinner() {
+    const random = Math.floor(Math.random() * 100);
+    let cumulative = 0;
+    
+    for (let i = 0; i < state.prizes.length; i++) {
+        cumulative += state.prizes[i].probability;
+        if (random < cumulative) {
             return i;
         }
     }
-
-    // 默认返回最后一个（防止边界情况）
-    return probabilities.length - 1;
+    return state.prizes.length - 1;
 }
 
-// 计算转盘停止角度
-function calculateStopAngle(prizeIndex) {
-    // 每个扇形的中心角度（从顶部0度开始，顺时针）
-    // 10个扇形，每个36度，中心分别为 0, 36, 72, ...
-    const sectorCenters = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324];
-    const targetCenter = sectorCenters[prizeIndex];
-    
-    // 计算让扇形中心对准指针的角度
-    // 指针位于转盘顶部（12点钟方向），即0度位置
-    // 目标是将 targetCenter 转到 0 度
-    // 需要逆时针旋转 targetCenter 度，或者顺时针旋转 (360 - targetCenter) 度
-    const targetAdjustment = (360 - targetCenter) % 360;
-    
-    // 增加随机偏移，让指针停在扇形内的随机位置，避免每次都停在正中心
-    // 扇形宽度36度，我们在 +/- 14度范围内随机（留点边距）
-    const randomOffset = Math.floor(Math.random() * 29) - 14; 
+function spinWheel(winnerIndex) {
+    state.isSpinning = true;
+    elements.drawButton.disabled = true;
+    elements.drawButton.textContent = '抽奖中...';
+    elements.resultDisplay.textContent = '';
+    elements.resultDisplay.classList.remove('winner');
 
-    // 为了视觉效果，至少转5圈以上
-    const baseRotation = 360 * 5;
+    const count = state.prizeCount;
+    const anglePerSector = 360 / count;
     
-    // 计算当前的旋转余数（归一化到0-360）
-    const currentMod = currentRotation % 360;
+    // 目标扇形的中心角度
+    // 扇形 i 的范围是 [i*angle, (i+1)*angle]
+    // 中心是 i*angle + angle/2
+    const sectorCenter = (winnerIndex * anglePerSector) + (anglePerSector / 2);
     
-    // 计算需要再转多少度才能到达目标调整角度
-    // 我们希望 (currentRotation + diff) % 360 === targetAdjustment
+    // 我们要让这个中心转到 0 度（顶部）
+    // 逆时针旋转 sectorCenter 度 => 顺时针旋转 (360 - sectorCenter)
+    const targetAdjustment = (360 - sectorCenter) % 360;
+    
+    // 随机偏移：在扇形范围内，留 1 度边距
+    // 范围 +/- (halfAngle - 1)
+    const halfAngle = anglePerSector / 2;
+    const safeZone = halfAngle - 2; // 留2度边距更安全
+    const randomOffset = (Math.random() * safeZone * 2) - safeZone;
+
+    // 基础旋转
+    const baseRotation = 360 * 8; // 8圈
+    
+    // 计算当前角度的模
+    const currentMod = state.currentRotation % 360;
+    
+    // 计算需要的增量
     let diff = targetAdjustment - currentMod;
+    if (diff < 0) diff += 360;
     
-    // 确保是顺时针旋转（diff必须为正）
-    if (diff < 0) {
-        diff += 360;
-    }
+    const finalAngle = state.currentRotation + baseRotation + diff + randomOffset;
+    
+    // 动画
+    elements.wheel.style.transition = 'transform 6s cubic-bezier(0.25, 1, 0.5, 1)';
+    elements.wheel.style.transform = `rotate(${finalAngle}deg)`;
+    
+    state.currentRotation = finalAngle;
 
-    console.log(`Prize Index: ${prizeIndex}, Target Center: ${targetCenter}, Current Rotation: ${currentRotation}, Diff: ${diff}, Random Offset: ${randomOffset}`);
-    
-    // 加上基础圈数和随机偏移
-    // 注意：randomOffset 是相对中心的偏移，直接加在最后即可
-    // 但要小心，如果加上 randomOffset 后变成了逆时针（负数），虽然 CSS 处理 rotate 负数没问题，
-    // 但为了逻辑统一，我们确保整体增量是正的。
-    // baseRotation 很大，所以不会有问题。
-    
-    const finalAngle = currentRotation + baseRotation + diff + randomOffset;
-    
-    return finalAngle;
-}
-
-// 转盘转动动画
-function spinWheel(prizeIndex) {
-    isSpinning = true;
-    drawButton.disabled = true;
-    drawButton.textContent = '抽奖中...';
-    resultDisplay.textContent = '';
-    resultDisplay.classList.remove('winner');
-
-    // 计算停止角度
-    const stopAngle = calculateStopAngle(prizeIndex);
-    
-    // 设置转盘最终角度
-    // 使用 cubic-bezier(0.25, 1, 0.5, 1) 模拟更自然的减速效果（Ease Out Quart 变体）
-    // 这种曲线初始速度快，然后非常平滑地减速直到停止
-    wheel.style.transition = 'transform 6s cubic-bezier(0.25, 1, 0.5, 1)';
-    wheel.style.transform = `rotate(${stopAngle}deg)`;
-    
-    // 更新当前旋转角度（保存完整角度，用于下次计算）
-    currentRotation = stopAngle;
-
-    // 转动完成后显示结果
     setTimeout(() => {
-        isSpinning = false;
-        drawButton.disabled = false;
-        drawButton.textContent = '开始抽奖';
+        state.isSpinning = false;
+        elements.drawButton.disabled = false;
+        elements.drawButton.textContent = '开始抽奖';
         
-        // 显示中奖结果
-        const prizeName = prizeNameInputs[prizeIndex].value.trim() || `奖品 ${prizeIndex + 1}`;
-        resultDisplay.textContent = `恭喜您抽中：【${prizeName}】`;
-        resultDisplay.classList.add('winner');
-    }, 4000);
+        const prizeName = state.prizes[winnerIndex].name;
+        elements.resultDisplay.textContent = `恭喜您抽中：【${prizeName}】`;
+        elements.resultDisplay.classList.add('winner');
+    }, 6000);
 }
 
-// 开始抽奖
-function startDraw() {
-    if (isSpinning || !validateProbabilities()) {
-        return;
-    }
-
+elements.drawButton.addEventListener('click', () => {
+    if (state.isSpinning) return;
     const winnerIndex = calculateWinner();
     spinWheel(winnerIndex);
+});
+
+elements.restartBtn.addEventListener('click', () => {
+    if (confirm('确定要重新配置吗？当前的配置将会丢失。')) {
+        switchStep(1);
+    }
+});
+
+// --- 通用 ---
+
+function switchStep(stepNumber) {
+    state.step = stepNumber;
+    
+    elements.step1.classList.add('hidden');
+    elements.step2.classList.add('hidden');
+    elements.step3.classList.add('hidden');
+    
+    if (stepNumber === 1) elements.step1.classList.remove('hidden');
+    if (stepNumber === 2) elements.step2.classList.remove('hidden');
+    if (stepNumber === 3) elements.step3.classList.remove('hidden');
 }
 
-// 绑定事件监听器
-prizeNameInputs.forEach(input => {
-    input.addEventListener('input', updateWheelDisplay);
-    input.addEventListener('blur', updateWheelDisplay);
-});
-
-prizeProbabilityInputs.forEach(input => {
-    input.addEventListener('input', validateProbabilities);
-    input.addEventListener('blur', validateProbabilities);
-    
-    // 限制只能输入数字
-    input.addEventListener('keypress', (e) => {
-        const char = String.fromCharCode(e.which);
-        if (!/[0-9]/.test(char) && e.which !== 8 && e.which !== 0) {
-            e.preventDefault();
-        }
-    });
-});
-
-drawButton.addEventListener('click', startDraw);
-
 // 初始化
-updateWheelDisplay();
-validateProbabilities();
-
+switchStep(1);

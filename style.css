@@ -30,21 +30,28 @@ h1 {
     font-size: 28px;
 }
 
-/* 配置区样式 */
-.config-section {
-    margin-bottom: 40px;
-}
-
-.config-section h2 {
+h2 {
     font-size: 20px;
     color: #374151;
     margin-bottom: 20px;
+    text-align: center;
 }
 
+/* 步骤容器 */
+.step-section {
+    transition: opacity 0.3s ease;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* 配置区样式 */
 .config-items {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin-bottom: 30px;
 }
 
 .config-item {
@@ -57,11 +64,19 @@ h1 {
     border: 1px solid #e5e7eb;
 }
 
+.config-item.center-content {
+    justify-content: center;
+}
+
 .config-item label {
     display: flex;
     align-items: center;
     gap: 8px;
     flex: 1;
+}
+
+.config-item.center-content label {
+    flex: 0 0 auto;
 }
 
 .config-item label span:first-child {
@@ -71,7 +86,8 @@ h1 {
 }
 
 .config-item input[type="text"],
-.config-item input[type="number"] {
+.config-item input[type="number"],
+.config-item select {
     flex: 1;
     padding: 8px 12px;
     border: 1px solid #e5e7eb;
@@ -80,8 +96,14 @@ h1 {
     transition: border-color 0.3s;
 }
 
+.config-item select {
+    min-width: 120px;
+    cursor: pointer;
+}
+
 .config-item input[type="text"]:focus,
-.config-item input[type="number"]:focus {
+.config-item input[type="number"]:focus,
+.config-item select:focus {
     outline: none;
     border-color: #3b82f6;
 }
@@ -149,23 +171,8 @@ h1 {
     align-items: center;
     justify-content: center;
     transform-origin: 50% 50%;
-    /* Create a wedge centered at top (0 degrees) with 36 degree spread (-18 to +18) */
-    /* tan(18) = 0.3249 => 50 * 0.3249 = 16.245 */
-    /* Points: Center(50,50), TopLeft(33.755, 0), TopRight(66.245, 0) */
-    clip-path: polygon(50% 50%, 33.755% 0%, 66.245% 0%);
+    /* clip-path will be set via JS */
 }
-
-/* 10个扇形，每个36度 */
-.wheel-sector[data-index="0"] { background: #fee2e2; transform: rotate(0deg); }
-.wheel-sector[data-index="1"] { background: #dbeafe; transform: rotate(36deg); }
-.wheel-sector[data-index="2"] { background: #d1fae5; transform: rotate(72deg); }
-.wheel-sector[data-index="3"] { background: #fef3c7; transform: rotate(108deg); }
-.wheel-sector[data-index="4"] { background: #ede9fe; transform: rotate(144deg); }
-.wheel-sector[data-index="5"] { background: #fee2e2; transform: rotate(180deg); }
-.wheel-sector[data-index="6"] { background: #dbeafe; transform: rotate(216deg); }
-.wheel-sector[data-index="7"] { background: #d1fae5; transform: rotate(252deg); }
-.wheel-sector[data-index="8"] { background: #fef3c7; transform: rotate(288deg); }
-.wheel-sector[data-index="9"] { background: #ede9fe; transform: rotate(324deg); }
 
 .sector-text {
     position: absolute;
@@ -179,7 +186,6 @@ h1 {
     top: 15%;
     left: 50%;
     transform: translateX(-50%);
-    /* Optional: rotate text to be vertical/radial if needed, but horizontal is readable for top sector */
 }
 
 .pointer {
@@ -202,19 +208,28 @@ h1 {
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    margin-top: 20px;
 }
 
-.draw-button {
+.row-actions {
+    flex-direction: row;
+    justify-content: center;
+}
+
+.draw-button, .secondary-button {
     padding: 15px 40px;
     font-size: 18px;
     font-weight: 600;
-    color: #ffffff;
-    background: #3b82f6;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
-    min-width: 200px;
+    min-width: 180px;
+}
+
+.draw-button {
+    color: #ffffff;
+    background: #3b82f6;
 }
 
 .draw-button:hover:not(:disabled) {
@@ -234,6 +249,16 @@ h1 {
     transform: none;
 }
 
+.secondary-button {
+    color: #374151;
+    background: #e5e7eb;
+}
+
+.secondary-button:hover {
+    background: #d1d5db;
+    transform: translateY(-2px);
+}
+
 .result-display {
     padding: 15px 30px;
     border-radius: 8px;
@@ -243,6 +268,8 @@ h1 {
     align-items: center;
     justify-content: center;
     color: #6b7280;
+    width: 100%;
+    text-align: center;
 }
 
 .result-display.winner {
@@ -270,5 +297,13 @@ h1 {
     .config-item label {
         width: 100%;
     }
+    
+    .row-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .draw-button, .secondary-button {
+        width: 100%;
+    }
 }
-
