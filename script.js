@@ -203,14 +203,14 @@ function spinWheel(winnerIndex) {
     // 逆时针旋转 sectorCenter 度 => 顺时针旋转 (360 - sectorCenter)
     const targetAdjustment = (360 - sectorCenter) % 360;
     
-    // 随机偏移：在扇形范围内，留 1 度边距
-    // 范围 +/- (halfAngle - 2)
+    // 随机偏移：在扇形范围内，随机停留在某个位置
+    // 范围 +/- (halfAngle * 0.8) 以确保不压线
     const halfAngle = anglePerSector / 2;
-    const safeZone = halfAngle - 2; // 留2度边距更安全
+    const safeZone = halfAngle * 0.8; 
     const randomOffset = (Math.random() * safeZone * 2) - safeZone;
 
-    // 基础旋转
-    const baseRotation = 360 * 8; // 8圈
+    // 基础旋转：增加圈数以模拟高速旋转
+    const baseRotation = 360 * 10; 
     
     // 计算当前角度的模
     const currentMod = state.currentRotation % 360;
@@ -221,8 +221,8 @@ function spinWheel(winnerIndex) {
     
     const finalAngle = state.currentRotation + baseRotation + diff + randomOffset;
     
-    // 动画
-    elements.wheel.style.transition = 'transform 6s cubic-bezier(0.25, 1, 0.5, 1)';
+    // 动画：使用更自然的减速曲线
+    elements.wheel.style.transition = 'transform 6s cubic-bezier(0.2, 0, 0.2, 1)';
     elements.wheel.style.transform = `rotate(${finalAngle}deg)`;
     
     state.currentRotation = finalAngle;
