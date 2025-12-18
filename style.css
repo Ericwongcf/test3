@@ -168,10 +168,10 @@ h2 {
     top: 0;
     left: 0;
     display: flex;
-    align-items: center;
     justify-content: center;
     transform-origin: 50% 50%;
-    /* clip-path will be set via JS */
+    /* 背景色由父元素的 conic-gradient 处理，这里只负责定位文字 */
+    pointer-events: none;
 }
 
 .sector-text {
@@ -180,10 +180,15 @@ h2 {
     font-weight: 600;
     color: #1f2937;
     white-space: nowrap;
-    pointer-events: none;
     z-index: 5;
-    /* Position text at the top of the wedge */
-    top: 15%;
+    
+    /* 竖排文字，更适合转盘 */
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 2px;
+    
+    /* 定位：距离顶部一定距离 */
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
 }

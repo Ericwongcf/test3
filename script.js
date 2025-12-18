@@ -125,24 +125,31 @@ function renderStep3() {
     const count = state.prizeCount;
     const anglePerSector = 360 / count;
     
-    // 计算 Clip Path
-    // 使用足够大的三角形覆盖扇形区域
-    // 顶点在中心 (50%, 50%)
-    // 对于 > 2 的数量，我们计算顶部边缘的两个点
-    const halfAngle = anglePerSector / 2;
-    const tanVal = Math.tan(halfAngle * Math.PI / 180);
-    const xOffset = 50 * tanVal; // 这里的50是指50%
-    // 偏移量
-    const x1 = 50 - xOffset;
-    const x2 = 50 + xOffset;
-    const clipPath = `polygon(50% 50%, ${x1}% 0%, ${x2}% 0%)`;
+    // 1. 设置背景：使用 conic-gradient 绘制扇形
+    // 为了让第0个扇形的中心对准0度（12点钟方向），我们需要偏移起始角度
+    // 偏移量 = -anglePerSector / 2
+    const offsetAngle = -anglePerSector / 2;
+    
+    let gradientParts = [];
+    state.prizes.forEach((prize, index) => {
+        const color = sectorColors[index % sectorColors.length];
+        const start = index * anglePerSector;
+        const end = (index + 1) * anglePerSector;
+        gradientParts.push(`${color} ${start}deg ${end}deg`);
+    });
+    
+    elements.wheel.style.background = `conic-gradient(from ${offsetAngle}deg, ${gradientParts.join(', ')})`;
+    elements.wheel.style.transform = 'rotate(0deg)'; // 重置旋转
 
+    // 2. 添加文字
     state.prizes.forEach((prize, index) => {
         const sector = document.createElement('div');
         sector.className = 'wheel-sector';
-        sector.style.backgroundColor = sectorColors[index % sectorColors.length];
-        sector.style.transform = `rotate(${index * anglePerSector}deg)`;
-        sector.style.clipPath = clipPath;
+        // 扇形中心线对应的角度
+        // 因为背景已经偏移了，所以第 i 个扇形的中心就在 i * anglePerSector
+        const rotation = index * anglePerSector;
+        
+        sector.style.transform = `rotate(${rotation}deg)`;
         
         // 调整文字
         const textSpan = document.createElement('span');
@@ -159,7 +166,6 @@ function renderStep3() {
     state.isSpinning = false;
     state.currentRotation = 0;
     elements.wheel.style.transition = 'none';
-    elements.wheel.style.transform = 'rotate(0deg)';
     elements.drawButton.disabled = false;
     elements.drawButton.textContent = '开始抽奖';
     elements.resultDisplay.textContent = '准备就绪，祝您好运！';
@@ -190,16 +196,15 @@ function spinWheel(winnerIndex) {
     const anglePerSector = 360 / count;
     
     // 目标扇形的中心角度
-    // 扇形 i 的范围是 [i*angle, (i+1)*angle]
-    // 中心是 i*angle + angle/2
-    const sectorCenter = (winnerIndex * anglePerSector) + (anglePerSector / 2);
+    // 现在第 i 个扇形的中心就在 i * anglePerSector
+    const sectorCenter = winnerIndex * anglePerSector;
     
     // 我们要让这个中心转到 0 度（顶部）
     // 逆时针旋转 sectorCenter 度 => 顺时针旋转 (360 - sectorCenter)
     const targetAdjustment = (360 - sectorCenter) % 360;
     
     // 随机偏移：在扇形范围内，留 1 度边距
-    // 范围 +/- (halfAngle - 1)
+    // 范围 +/- (halfAngle - 2)
     const halfAngle = anglePerSector / 2;
     const safeZone = halfAngle - 2; // 留2度边距更安全
     const randomOffset = (Math.random() * safeZone * 2) - safeZone;
